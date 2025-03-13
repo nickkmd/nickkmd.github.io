@@ -62,8 +62,8 @@
 
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Ramp SDK (official source) -->
-    <script src="https://buy.ramp.network/v0.1/ramp.js"></script>
+    <!-- Ramp SDK (correct SDK that exposes constructor globally) -->
+    <script src="https://unpkg.com/@ramp-network/ramp-instant-sdk"></script>
 
     <script>
         const rampConfig = {
@@ -100,11 +100,11 @@
 
         function initializeRampWidget() {
             try {
-                console.log('RampInstantSDK:', window.RampInstantSDK);
-                if (typeof window.RampInstantSDK === 'undefined') {
+                console.log('RampInstantSDK:', typeof RampInstantSDK);
+                if (typeof RampInstantSDK === 'undefined') {
                     throw new Error('Ramp SDK not available after load');
                 }
-                const ramp = new window.RampInstantSDK(rampConfig);
+                const ramp = new RampInstantSDK(rampConfig);
                 return ramp;
             } catch (error) {
                 console.error('Error initializing Ramp widget:', error);
