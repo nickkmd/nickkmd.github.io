@@ -62,8 +62,8 @@
 
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Ramp SDK (correct SDK that exposes constructor globally) -->
-    <script src="https://unpkg.com/@ramp-network/ramp-instant-sdk"></script>
+    <!-- Ramp SDK -->
+    <script src="https://cdn.ramp.network/v2/ramp-instant-sdk.js"></script>
 
     <script>
         const rampConfig = {
@@ -98,12 +98,27 @@
             loadingIndicator.style.display = 'none';
         }
 
-        function initializeRampWidget() {
+        function waitForRampSDK(timeout = 5000) {
+            return new Promise((resolve, reject) => {
+                const startTime = Date.now();
+                const checkSDK = () => {
+                    if (window.RampInstantSDK) {
+                        resolve(window.RampInstantSDK);
+                        return;
+                    }
+                    if (Date.now() - startTime > timeout) {
+                        reject(new Error('Ramp SDK load timeout'));
+                        return;
+                    }
+                    setTimeout(checkSDK, 100);
+                };
+                checkSDK();
+            });
+        }
+
+        async function initializeRampWidget() {
             try {
-                console.log('RampInstantSDK:', typeof RampInstantSDK);
-                if (typeof RampInstantSDK === 'undefined') {
-                    throw new Error('Ramp SDK not available after load');
-                }
+                const RampInstantSDK = await waitForRampSDK();
                 const ramp = new RampInstantSDK(rampConfig);
                 return ramp;
             } catch (error) {
@@ -118,7 +133,7 @@
             showLoading();
 
             try {
-                const ramp = initializeRampWidget();
+                const ramp = await initializeRampWidget();
                 if (!ramp) return;
                 await ramp.show();
             } catch (error) {
