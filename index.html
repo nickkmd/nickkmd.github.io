@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ramp Crypto Mini App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .buy-button {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .buy-button:active {
+            opacity: 0.8;
+        }
+
+        .error-message {
+            color: #ff4444;
+            text-align: center;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 16px;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+    </style>
+</head>
+<body>
+    <button id="buyButton" class="buy-button">Buy Crypto</button>
+    <div id="errorMessage" class="error-message"></div>
+    <div id="loading" class="loading">Loading...</div>
+
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Ramp SDK (official source) -->
+    <script src="https://buy.ramp.network/v0.1/ramp.js"></script>
+
+    <script>
+        const rampConfig = {
+            hostAppName: 'RampCryptoBot',
+            hostLogoUrl: 'https://your-logo-url.com/logo.png',
+            userAddress: '0x1234567890123456789012345678901234567890',
+            defaultAsset: 'ETH',
+            swapAsset: 'USDC',
+            hostApiKey: 'e4yoa3ncvsvg52ped6r5fznmp6wynzwtjrwjg6gm',
+            variant: 'overlay'
+        };
+
+        const telegram = window.Telegram?.WebApp;
+        const buyButton = document.getElementById('buyButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingIndicator = document.getElementById('loading');
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function showLoading() {
+            loadingIndicator.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        function initializeRampWidget() {
+            try {
+                console.log('RampInstantSDK:', window.RampInstantSDK);
+                if (typeof window.RampInstantSDK === 'undefined') {
+                    throw new Error('Ramp SDK not available after load');
+                }
+                const ramp = new window.RampInstantSDK(rampConfig);
+                return ramp;
+            } catch (error) {
+                console.error('Error initializing Ramp widget:', error);
+                showError('Failed to initialize Ramp widget. Please try again later.');
+                return null;
+            }
+        }
+
+        async function handleBuyClick() {
+            hideError();
+            showLoading();
+
+            try {
+                const ramp = initializeRampWidget();
+                if (!ramp) return;
+                await ramp.show();
+            } catch (error) {
+                console.error('Error showing Ramp widget:', error);
+                showError('Failed to open Ramp widget. Please try again later.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function initializeApp() {
+            try {
+                if (telegram) {
+                    await telegram.ready();
+                    console.log('Telegram WebApp initialized');
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const walletAddress = urlParams.get('wallet');
+                if (walletAddress) rampConfig.userAddress = walletAddress;
+
+                buyButton.addEventListener('click', handleBuyClick);
+
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showError('Failed to initialize app. Please try again later.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
