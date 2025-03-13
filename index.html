@@ -63,37 +63,16 @@
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Ramp SDK -->
-    <script src="https://cdn.ramp.network/v2/ramp-instant-sdk.js"></script>
+    <script src="https://unpkg.com/@ramp-network/ramp-instant-sdk@latest/dist/ramp-instant-sdk.js"></script>
 
     <script>
         const rampConfig = {
             hostAppName: 'RampCryptoBot',
             hostLogoUrl: 'https://your-logo-url.com/logo.png',
-            userAddress: '0x1234567890123456789012345678901234567890',
-            defaultAsset: 'ETH',
-            swapAsset: 'USDC',
             hostApiKey: 'e4yoa3ncvsvg52ped6r5fznmp6wynzwtjrwjg6gm',
-            variant: 'overlay',
-            // Add required configuration
-            fiatCurrency: 'USD',
-            fiatValue: 100,
-            webhookStatusUrl: 'https://your-webhook-url.com/status',
-            selectedCountryCode: 'US',
-            defaultFlow: 'ONRAMP',
-            // Add supported assets
-            supportedAssets: ['ETH', 'USDC', 'USDT'],
-            // Add required URLs
-            url: 'https://app.ramp.network',
-            // Add required callbacks
-            onPurchaseCreated: (purchase) => {
-                console.log('Purchase created:', purchase);
-            },
-            onPurchaseSuccess: (purchase) => {
-                console.log('Purchase success:', purchase);
-            },
-            onPurchaseFailed: (purchase) => {
-                console.log('Purchase failed:', purchase);
-            }
+            swapAmount: '150000000000000000000', // 150 ETH in wei
+            swapAsset: 'ETH_ETH',
+            userAddress: '0x1234567890123456789012345678901234567890'
         };
 
         const telegram = window.Telegram?.WebApp;
@@ -119,57 +98,26 @@
             loadingIndicator.style.display = 'none';
         }
 
-        function waitForRampSDK(timeout = 10000) {
-            return new Promise((resolve, reject) => {
-                const startTime = Date.now();
-                const checkSDK = () => {
-                    console.log('Checking for Ramp SDK...');
-                    if (window.RampInstantSDK) {
-                        console.log('Ramp SDK found!');
-                        resolve(window.RampInstantSDK);
-                        return;
-                    }
-                    if (Date.now() - startTime > timeout) {
-                        console.error('Ramp SDK not found after timeout');
-                        reject(new Error('Ramp SDK load timeout'));
-                        return;
-                    }
-                    setTimeout(checkSDK, 100);
-                };
-                checkSDK();
-            });
-        }
-
-        async function initializeRampWidget() {
-            try {
-                console.log('Starting Ramp widget initialization...');
-                const RampInstantSDK = await waitForRampSDK();
-                console.log('Creating new Ramp instance...');
-                const ramp = new RampInstantSDK(rampConfig);
-                console.log('Ramp instance created successfully');
-                return ramp;
-            } catch (error) {
-                console.error('Detailed error initializing Ramp widget:', error);
-                showError(`Failed to initialize Ramp widget: ${error.message}`);
-                return null;
-            }
-        }
-
         async function handleBuyClick() {
             hideError();
             showLoading();
 
             try {
                 console.log('Buy button clicked, initializing Ramp...');
-                const ramp = await initializeRampWidget();
-                if (!ramp) {
-                    console.error('Ramp initialization failed');
-                    return;
-                }
-                console.log('Showing Ramp widget...');
+                
+                // Create new instance of RampInstantSDK
+                const ramp = new RampInstantSDK(rampConfig);
+                
+                // Add event listener for all events
+                ramp.on('*', (event) => {
+                    console.log('Ramp event:', event);
+                });
+
+                // Show the widget
                 await ramp.show();
+                console.log('Ramp widget shown successfully');
             } catch (error) {
-                console.error('Error showing Ramp widget:', error);
+                console.error('Error with Ramp widget:', error);
                 showError(`Failed to open Ramp widget: ${error.message}`);
             } finally {
                 hideLoading();
